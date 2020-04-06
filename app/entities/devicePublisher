@@ -1,0 +1,38 @@
+var deviceManager = require("app/entities/deviceManager");
+var utils = require("app/entities/utils")
+var _ = require("modules/underscore/underscore.js")._;
+var user = require("user");
+
+var log = require("log");
+log.setLevel("INFO");
+
+var publishChannel = "responseChannel"
+
+function publishDevice(entry){
+    log.info("[app/entities/devicepublisher] Publish entry: "+JSON.stringify(entry))
+    var result =user.query({"query": "userid = \""+ entry.patientid + "\"", fields: "*"})
+    if(result.metadata.status == "success") {
+    	var patient = result.result.users[0];
+        patient["sensors"] = [];
+        var sensors = patient.targetDevices;
+        _.forEach(sensors, function(sensor){
+            patient["sensors"].push({"name": sensor,  "data": deviceManager.getPatientSensorLatestEvent(sensor, patient.userid)});
+        })
+        publish(publishChannel, {"id": "dashboard_"+patient.id, "result": {
+            "latest": utils.format([patient])
+         	 }
+        });
+        publish(publishChannel, {"id": "map", "result": utils.format([patient])});
+        
+        patient["sensors"] = [];
+         _.forEach(sensors, function(sensor){
+            patient["sensors"].push({"name": sensor,  "data": deviceManager.getPatientSensorHistoricalEntries(sensor, patient.userid)});
+        })
+        publish(publishChannel, {"id": "dashboard_"+patient.id+"_historical", "result": {
+            "historical": patient 
+        	}
+        });
+  
+     	
+    }
+}

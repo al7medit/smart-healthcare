@@ -1,0 +1,60 @@
+var responseObject = {};
+var channels = require("channel");
+var devices = require("device");
+var groups = require("group");
+
+
+/** Setup account default domain if none is set **/
+var subdomain = "healthcare-"+request.account.accountKey;
+var params = {
+    "apsdb.name": subdomain
+}
+
+var step = apsdb.callApi("SaveSubdomain", params, null); 
+responseObject["subdomainCreation_"+subdomain] = JSON.stringify(step)
+
+
+/** 
+Create a clinic & patient group also group editor that allows its users to access the scriptr ide plugins, ex: decision table **/
+
+var userGroups = ["clinic", "patient" ,"editor"]
+userGroups.forEach(function(group) {
+   var step2 = groups.create(group);
+   responseObject["groupCreation_"+group] = JSON.stringify(step2)
+});
+
+
+/** Create Anonymous publish channel used to receive requests from browser **/
+var channelsList =  ["requestChannel", "responseChannel"];
+var options = {
+  "subscribeACL": "anonymous",
+  "publishACL": "anonymous"
+}
+
+channelsList.forEach(function(channel) {
+   var step3 = channels.create(channel, options);
+   responseObject["channelCreation_"+channel] = JSON.stringify(step3)
+});
+
+
+
+var configurationSettings = {"apsdb.optionalBindReferrer": "true"};
+responseObject["savingConfiguration"] = apsdb.callApi("SaveConfiguration", configurationSettings, null)
+
+
+//Create the channel used by the subscribe script
+var channelsList =  ["deviceDigest"];
+var params = {"name" : "deviceDigest", "subscribeACL": ["authenticated"],"publishACL":  ["authenticated"]};
+var step6 = apsdb.callApi("SaveChannel", params , null )
+responseObject["channelCreation_"+params.name] = JSON.stringify(step6);
+
+var pubsub = require("pubsub");
+var topic = pubsub.getInstance("deviceDigest");
+var response = topic.subscribe("app/api/subscription/subscriber", "script");
+responseObject["subscribeScriptToChannel"] = JSON.stringify(response);
+
+//Set a scheduler to cleanup events
+var scheduleCleanup = schedule("app/cleanup/devicesEvents", "5 * * * ?");
+responseObject["scheduleCleanup"] = JSON.stringify(scheduleCleanup);
+
+return responseObject;

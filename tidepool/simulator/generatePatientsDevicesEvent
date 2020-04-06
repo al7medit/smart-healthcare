@@ -1,0 +1,31 @@
+var moment = require("/modules/momentjs/moment.min.js").moment;
+
+var patientId = "123123";
+
+var dexcomEvent = {
+"id": "dexcom",
+"deviceId":"DexG5MobRec_MF123123",
+"deviceTime": moment().format("YYYY-MM-DDTHH:mm:ss"),
+"type":"cbg",
+"units":"mmol/L",
+"value": (Math.random() * (8 - 6) + 6)
+}
+
+var omnipodEvent = {
+"id": "omnipod",   
+"deviceId":"InsOmn_MF123123",
+"deviceTime": moment().format("YYYY-MM-DDTHH:mm:ss"),
+"subType":"manual",
+"type":"smbg",
+"units":"mmol/L",
+"value": (Math.random() * (12 - 6) + 6)
+}
+
+publish("deviceDigest", {"patientId": "123123", "events": [omnipodEvent,dexcomEvent]})
+
+
+
+
+
+
+

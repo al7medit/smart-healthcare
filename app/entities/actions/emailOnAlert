@@ -1,0 +1,33 @@
+var templates = require("app/entities/actions/templates");
+var config = require("app/config/config");
+var _ = require("modules/underscore/underscore.js")._;
+var user = require("user");
+
+var log = require("log");
+log.setLevel("INFO");
+
+function execute(request, device, alertType){
+   var result =user.query({"query": "userid = \""+ device.patientid + "\"", fields: "*"})
+   if(result.metadata.status == "success") {
+    	var patient = result.result.users[0];
+        var result =user.query({"query": "userid = \""+ patient.healthcare_professional + "\"", fields: "*"})
+        if(result.metadata.status == "success") {
+            var healthcare = result.result.users[0];
+            var entry = _.extendOwn(device, {"patient_name": patient.name});
+            log.info("Email data entry "+JSON.stringify(entry))
+            return sendEmailForAlertType(request, entry, healthcare.emails, config.email.FROM, alertType);
+        }
+       log.error("Failed to load healthcare info "+ JSON.stringify(result))
+   		
+   } else {
+       log.error("Failed to load patient info "+ JSON.stringify(result))
+   }
+   
+}
+
+function sendEmailForAlertType(request, device, toEmail, fromEmail, alertType) {
+    var subject = _.template(templates.getTemplate("mail", alertType).subject)(device);
+    var body = _.template(templates.getTemplate("mail", alertType).body)(device);
+    log.info(toEmail+ " "+ fromEmail + " " + subject + " " + body)
+    return sendMail(toEmail, fromEmail, subject, body);
+}

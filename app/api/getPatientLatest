@@ -1,0 +1,48 @@
+var deviceManager = require("app/entities/deviceManager")
+var utils = require("app/entities/utils");
+var user = require("user");
+var config = require("app/config/config");
+var _ = require("modules/underscore/underscore.js")._;
+
+var query = {};
+if(request.body != null){
+    query = request.body;
+}else if(request.parameters.body){
+    query = request.parameters.body;
+} else {
+    query = request.parameters;
+}
+var isHealthCare  = isIdInAcl(request.user.id, config.healthcareGroup)
+var isPatient  = isIdInAcl(request.user.id, config.patientGroup)
+if(isHealthCare) {
+    var patient = user.get(query.id);
+    if(patient.metadata.status == "success") {
+        //Check if healthcare professional allowed to view patient info
+        if((patient.result.healthcare_professional == request.user.userid) || patient.result.healthcare_professional.indexOf(request.user.userid) > 0) {
+            patient.result["sensors"] = [];
+            var sensors = patient.result.targetDevices;
+            _.forEach(sensors, function(sensor){
+                patient.result["sensors"].push({"name": sensor,  "data": deviceManager.getPatientSensorLatestEvent(sensor, patient.result.userid)});
+            });
+            return utils.format([patient.result]);
+        } else {
+            return [];
+        }
+    } else {
+        return []
+    }
+} 
+if(isPatient) {
+    if(request.user.id == query.id) {
+        var profile = JSON.parse(JSON.stringify(request.user));
+        //Get Latest data for each patient
+        profile["sensors"] = [];
+        var sensors = request.user.targetDevices;
+        _.forEach(sensors, function(sensor){
+            profile["sensors"].push({"name": sensor,  "data": deviceManager.getPatientSensorLatestEvent(sensor, profile.userid)});
+        })
+        return utils.format([profile]);
+    } else {
+        return [];
+    }
+}

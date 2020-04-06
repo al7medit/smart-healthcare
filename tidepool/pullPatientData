@@ -1,0 +1,46 @@
+var manager = require("tidepool/manager");
+var log = require("log");
+log.setLevel("INFO");
+
+var params = JSON.parse(request.parameters.params);
+var events = manager.getPatientDetails(params.sessionToken, params.patientId, {"type": "smbg,cbg"});
+
+
+var ingestor = require("app/entities/ingestDevicesEvents");
+return ingestor.ingestEvents(events, params.patientId, false);
+
+/**
+{
+
+"deviceId":"DexG5MobRec_SM70602620",
+"deviceTime":"2017-04-06T20:18:48",
+"guid":"cda5a9d2-c15c-4ca4-9162-79ecc35e2fa4",
+"id":"72tm6sg4qvt4s42njrm5bddi59lb074v",
+"payload":{"internalTime":"2017-04-07T04:18:48",
+"logIndices":[260770728],
+"noiseMode":"Clean",
+"transmitterTimeSeconds":26105,
+"trend":"Flat"},
+"time":"2017-04-07T03:18:48.000Z",
+"timezoneOffset":-420,
+"type":"cbg",
+"units":"mmol/L",
+"uploadId":"upid_70706cbc5eb3",
+"value":7.937569627195113
+}
+
+{
+"deviceId":"InsOmn-130250652",
+"deviceTime":"2017-04-18T10:52:02",
+"guid":"302ee33e-9490-46e9-b49d-caa20ebe204f",
+"id":"jim8rio58m4608am5r4ub8pth1mdkssb",
+"payload":{"logIndices":[3659]},
+"subType":"manual",
+"time":"2017-04-18T17:52:02.000Z",
+"timezoneOffset":-420,
+"type":"smbg",
+"units":"mmol/L",
+"uploadId":"upid_9bd59685fd41",
+"value":11.601063301285166
+}
+**/

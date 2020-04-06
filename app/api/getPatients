@@ -1,0 +1,19 @@
+var deviceManager = require("app/entities/deviceManager");
+var _ = require("modules/underscore/underscore.js")._;
+var utils = require("app/entities/utils");
+var config = require("app/config/config");
+var documents = [];
+
+var isHealthCare  = isIdInAcl(request.user.id, config.healthcareGroup)
+var isPatient  = isIdInAcl(request.user.id, config.patientGroup)
+if(isHealthCare) {
+    var patients = deviceManager.getAllPatients(request.user.userid);
+    return patients;
+}
+
+if(isPatient) {
+    return [request.user]
+}
+
+
+

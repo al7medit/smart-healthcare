@@ -1,0 +1,105 @@
+var config = require("tidepool/config");
+var manager = require("tidepool/manager");
+var _ = require("modules/underscore/underscore.js")._;
+var moment = require("/modules/momentjs/moment.min.js").moment;
+var log = require("log");
+log.setLevel("INFO");
+var users = require("user");
+var devices = require("device");
+var groups = require("group");
+
+
+var utils = require("app/entities/utils");
+
+
+//Get professional healthcare info
+var result = manager.getSessionInfo();
+
+log.info("SESSION INFO "+JSON.stringify(result));
+
+var responseObj = [];
+if(result.sessionToken && result.user && result.user.userid) {
+    //Create or update user
+    var params = {
+        "id" : result.user.username,
+        "name": result.user.username,
+        "userid": result.user.userid,
+        "address": config.healthcareDataTopUp.address,
+        "country": config.healthcareDataTopUp.country,
+        "termsAccepted": moment(result.user.termsAccepted).format('YYYY-MM-DDTHH:mm:ssZZ'),
+        "emails":  result.user.emails,
+        "password" : "demo", //Temporary
+        "groups" : ["clinic"],
+        "meta.types" : {
+            "termsAccepted" : "date"
+        }
+    };
+    
+    _.extend(config.healthcareDataTopUp, utils.randomGeo({"lat": config.healthcareDataTopUp.lat, "lng": config.healthcareDataTopUp.long}, 2000));
+    
+    log.info("User Healthcare " + JSON.stringify(params))
+	
+    //Update or Create Healthcare user
+	var saveHealthcare = users.save(params);
+    
+    log.info("Save healthcare: "+ JSON.stringify(saveHealthcare));
+    
+    responseObj.push({"healthcare": params , "saveHealthcare": saveHealthcare });
+    
+    var patients = manager.listPatients(result.sessionToken, result.user.userid);
+    _.forEach(patients, function(patient){
+        log.info("Patient " + JSON.stringify(patient))
+        var params = {
+            "id" : patient.username.replace("+","-"),
+            "name": patient.profile.fullName,
+            "lat": 38.889248, 
+    		"long": -77.050636,
+            "address": config.patientDataTopUp.address,
+    		"country": config.patientDataTopUp.country,
+            "userid": patient.userid,
+            "termsAccepted": moment(result.user.termsAccepted).format('YYYY-MM-DDTHH:mm:ssZZ'),
+            "emails":  patient.emails,
+            "password" : "demo", //Temporary
+            "groups" : ["patient"],
+            "birthday": patient.profile.patient.birthday,
+            "diagnosisDate": patient.profile.patient.diagnosisDate,
+            "targetDevices": patient.profile.patient.targetDevices,
+            "healthcare_professional": [result.user.userid],
+            "meta.types" : {
+                "termsAccepted" : "date",
+            	"birthday" : "date",
+            	"diagnosisDate" : "date"
+         	}
+    	};
+        
+        _.extend(config.patientDataTopUp, utils.randomGeo({"lat": config.patientDataTopUp.lat, "lng": config.patientDataTopUp.long}, 2000));
+        log.info("User Patient " + JSON.stringify(params))
+        var savePatientResult = users.save(params);
+        log.info("Save patient: "+ JSON.stringify(savePatientResult));
+        
+        responseObj.push({"patient": params , "savePatient": savePatientResult });
+        
+        var pullPatientDataParams = {
+            "sessionToken": result.sessionToken, 
+            "patientId": patient.userid
+        };
+
+        var pullPatientDataQueue = {
+            "apsdb.scriptName":"tidepool/pullPatientData",
+            "params": JSON.stringify(pullPatientDataParams),
+        };
+
+
+        var patientDataQueue = apsdb.callApi("QueueScript", pullPatientDataQueue, null);
+  
+        if (patientDataQueue.status == "failure") {
+            var errorMsg = "[pullPatientData] An error occurred while queueing job [" + JSON.stringify(patientDataQueue) + "]";
+            responseObj.push({"patientDetailsJobError": errorMsg });
+        } else {
+            
+            responseObj.push({"status":"success", "result": patientDataQueue});
+        }
+        
+    });
+     return responseObj;
+}

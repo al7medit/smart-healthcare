@@ -1,0 +1,37 @@
+/**
+
+URL : https://int-app.tidepool.org/
+Credentials: shamly@telecareus.com / Nagrig@123
+**/
+
+var auth_url = "https://int-app.tidepool.org/auth/login";
+var login = "shamly@telecareus.com";
+var password = "Nagrig@123";
+
+
+/**
+List users
+URL: https://int-api.tidepool.org/metadata/users/<healthcare_professsional_id>/users
+The healthcare professional id is obtained from the userid field upon the obtention of a session token
+The header should contain the x-tidepool-session-token field holding the value of the session token
+**/
+
+var list_patients_url = "https://int-api.tidepool.org/metadata/users/<%healthcare_professsional_id%>/users";
+
+var patient_details_url = "https://int-api.tidepool.org/data/<%patient_id%>";
+
+var patientDataTopUp =  {
+    "lat": 39.530616, 
+    "long": -77.5365759,
+    "address": "9 Schilling Rd, Hunt Valley, MD 21031",
+    "country": "United States",
+    "source": "tidepool"
+}
+
+var healthcareDataTopUp =  {
+    "lat": 39.5838857,
+    "long": -77.0393991,
+    "address": "200 Memorial Ave, Westminster, MD 21157",
+    "country": "United States",
+    "source": "tidepool"
+}

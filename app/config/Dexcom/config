@@ -1,0 +1,9 @@
+var mapper = "app/config/Dexcom/dataTransformation";
+
+var deviceDataTopUp =  {
+    "lat": 39.530616, 
+    "long": -77.5365759,
+    "address": "9 Schilling Rd, Hunt Valley, MD 21031",
+    "country": "United States",
+    "source": "tidepool"
+}

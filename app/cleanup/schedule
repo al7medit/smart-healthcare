@@ -1,0 +1,7 @@
+var deleteDevicesEventQueue = {
+    "apsdb.scriptName":"app/cleanup/devicesEvents",
+    "params": JSON.stringify({}),
+};
+
+
+return apsdb.callApi("QueueScript", deleteDevicesEventQueue, null);

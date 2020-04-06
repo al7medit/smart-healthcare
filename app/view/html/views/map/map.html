@@ -1,0 +1,23 @@
+<div ng-include="'/app/view/html/views/search/searchDevices.html'" ng-if="vm.user.groups != 'patient'"></div>
+<div ng-init="vm.init();" ng-controller= "mapCtrl as vm" ng-class='{"no-filter": vm.user.groups == "patient"}'> <scriptr-map
+             sources-info="vm.sources"
+             clustered-view="true"
+             cluster-zoom="8"
+             path-stroke-opacity="0.5"
+             path-stroke-weight="10"
+             summary-icons="vm.icons"
+             api="app/api/getLatestPatients"
+             api-params="{}"
+             msg-tag="map"
+             geofence-manager="false"
+             bounce="true"
+             selected-tracked-asset="{{vm.deviceKey}}"
+             detailed-zoom-min="12"
+             on-select-asset="vm.onSelectAsset"
+             set-marker-icon="vm.setMarkerIcon"
+             max-asset-points=1
+             custom-default-info-window="infoWindowTemplate_generic"
+>
+    <info-window id="infoWindowTemplate_generic" template="/app/view/html/views/map/info_generic.html" max-width="600" max-height="700" style="position: relative"></info-window>
+</scriptr-map>
+</div>

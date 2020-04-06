@@ -1,0 +1,70 @@
+var log = require("log"); 
+log.setLevel("INFO");
+
+var devices = require("device");
+var utils = require("app/entities/utils");
+
+var _ = require("modules/underscore/underscore.js")._;
+
+var deviceManager = require("app/entities/deviceManager");
+var deviceEvaluator = require("app/entities/deviceEvaluator");
+var devicePublisher = require("app/entities/devicePublisher");
+
+var config = require("app/config/config");
+
+function ingestEvents(events, patientId, freshData) {
+    _.forEach(events, function(event){
+        var data = {};
+
+        deviceConfig = config.availableDeviceTypes[event.type];
+        log.info(JSON.stringify(deviceConfig));
+        var deviceMapper = require(deviceConfig.mapper);
+        data = deviceMapper.mapIt(event); 
+        data = _.omit(data, function(value, key, object) {
+            return _.isUndefined(value);
+        });
+
+
+    if(!_.isEmpty(data)) { 
+        try {
+            var deviceDefinition = deviceManager.getDeviceDefinition(data.id);
+            log.info("Existing Device Definition: "+JSON.stringify(deviceDefinition))
+            if(deviceDefinition == null) {
+                var deviceDefinition = {};
+
+                _.extend(deviceConfig.deviceDataTopUp, utils.randomGeo({"lat": deviceConfig.deviceDataTopUp.lat, "lng": deviceConfig.deviceDataTopUp.long}, 2000));
+
+                deviceDefinition = _.extend(deviceConfig.deviceDataTopUp, data);
+                deviceDefinition.id = deviceDefinition.name = data.id;
+                deviceDefinition.patientid = patientId;
+                deviceDefinition = deviceManager.buildDeviceDefinitionDocument(deviceDefinition);
+                //Save device definition
+                log.info("[app/api/subscription/subscriber] Creating Device Definition: "+JSON.stringify(deviceDefinition))
+                var result = deviceManager.saveDeviceDefinition(deviceDefinition);
+                
+            }
+            var entry = {};
+            entry = deviceManager.buildDeviceEventDocument(deviceDefinition, data);
+            log.info("[app/api/subscription/subscriber] Processing Event Entry: " + JSON.stringify(entry))	
+            if(freshData)
+                return processEntry(entry)
+            else
+                return deviceManager.saveDeviceEvent(entry);
+        }catch(exception) {
+            log.info("Exception: "+JSON.stringify(exception))
+            return exception;    
+        }
+    } else {
+        log.info("[app/api/subscription/subscriber] No transformation found for data");
+        return;
+    }
+
+    });
+}
+
+
+function processEntry(entry) {
+    deviceEvaluator.evaluateDevice(entry)
+    deviceManager.saveDeviceEvent(entry);
+    devicePublisher.publishDevice(entry);
+}

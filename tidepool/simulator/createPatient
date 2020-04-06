@@ -1,0 +1,28 @@
+var user = require("user");
+var params = {
+    "name": "Marvette Feghali",
+    "groups": "patient",
+    "birthday": "1982-01-08T00:00:00+0000",
+    "password": "demo",
+    "targetDevices": [
+        "dexcom",
+        "omnipod"
+    ],
+    "country": "United States",
+    "userid": "123123",
+    "long": "-77.006332",
+    "emails": "marvette@scriptr.io",
+    "id": "marvette@scriptr.io",
+    "lat": "38.897095",
+    "address": "875 Phoenix Ave. Washington, DC 20013",
+    "diagnosisDate": "1995-08-21T00:00:00+0000",
+    "healthcare_professional": "9c8e580a2e",
+    "termsAccepted": "2020-02-29T00:19:39+0000",
+    "meta.types" : {
+        "termsAccepted" : "date",
+        "birthday" : "date",
+        "diagnosisDate" : "date"
+    }
+}
+
+return user.save(params);

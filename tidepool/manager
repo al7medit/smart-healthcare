@@ -1,0 +1,98 @@
+var http = require("http");
+var config = require("tidepool/config");
+var hogan = require("modules/hogan/hogan.js").Hogan;
+
+var log = require("log");
+log.setLevel("INFO");
+
+function getSessionInfo(url, login, password) {
+    
+    var login = login || config.login;
+    var password = password || config.password
+    var params = {
+        "url": url || config.auth_url,
+        "method":"POST",
+        headers: {"Authorization" : "Basic " + btoa(login + ":" + password)}
+    }
+  
+   var response = http.request(params); 
+  log.info(JSON.stringify(response))
+   if (response.status == "200") {
+    var result = {};
+       
+    if(response.headers) {
+        result.sessionToken = response.headers["x-tidepool-session-token"];
+    }
+    if (response.body) {
+      try { 
+        result.user = JSON.parse(response.body ?  response.body : {});
+      }catch(exception) {
+        result.user = response.body;
+      } 
+    } 
+       
+    return result;
+    
+  }else {
+    throw response;
+  }
+}
+
+function listPatients(sessionToken, healthcareId) {
+    var params = {
+        "url": hogan.compile(config.list_patients_url, {delimiters: '<% %>'}).render({"healthcare_professsional_id": healthcareId }),
+        "method":"GET",
+        headers: {"x-tidepool-session-token" : sessionToken}
+    }
+   var response = http.request(params); 
+   log.info("List Patients Response: " + JSON.stringify(response))
+   if (response.status == "200") {
+    var responseBody = "";
+    if (response.body) {
+      try { 
+        responseBody = JSON.parse(response.body ?  response.body : {});
+      }catch(exception) {
+        responseBody = response.body;
+      } 
+    }    
+    if (responseBody.message) {
+      throw response;
+    }else {
+      return responseBody;
+    }
+  }else {
+    throw response;
+  }
+}
+
+
+function getPatientDetails(sessionToken, patientId, params) {
+    var params = {
+        "url": hogan.compile(config.patient_details_url, {delimiters: '<% %>'}).render({"patient_id": patientId }),
+        "method":"GET",
+        "headers": {"x-tidepool-session-token" : sessionToken},
+        "params": params
+        
+    }
+   
+   log.info("Patient Details Request "+ JSON.stringify(params))
+   var response = http.request(params); 
+   if (response.status == "200") {
+    var responseBody = "";
+    if (response.body) {
+      try { 
+        responseBody = JSON.parse(response.body ?  response.body : {});
+      }catch(exception) {
+        responseBody = response.body;
+      } 
+    }    
+    
+    if (responseBody.message) {
+      throw response;
+    }else {
+      return responseBody;
+    }
+  }else {
+    throw response;
+  }
+}

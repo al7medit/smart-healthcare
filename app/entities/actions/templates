@@ -1,0 +1,11 @@
+var _templates = require("app/config/config").templates;
+
+function getTemplate(type, event){
+  if(!_templates[type][event])
+     return  {
+          subject: '<%= id %> - <%= locationSection %>: ' + event + ' Alert!',
+          body: '<%= address %> - <%= physicalEnvironment %> in <%= locationSection %> with <%= sensor %> sensor <%= id %> has an Alert event for '+event+'. Device data recorded at alert time was: '+ JSON.stringify(event)+"."
+      }
+  else
+      return _templates[type][event];
+}

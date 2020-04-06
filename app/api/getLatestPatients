@@ -1,0 +1,37 @@
+var deviceManager = require("app/entities/deviceManager");
+var _ = require("modules/underscore/underscore.js")._;
+var utils = require("app/entities/utils");
+var config = require("app/config/config");
+var documents = [];
+
+var isHealthCare  = isIdInAcl(request.user.id, config.healthcareGroup)
+var isPatient  = isIdInAcl(request.user.id, config.patientGroup)
+if(isHealthCare) {
+    var patients = deviceManager.getAllPatients(request.user.userid);
+    
+    //Get Latest data for each patient
+    _.forEach(patients, function(patient) {
+        patient["sensors"] = [];
+        var sensors = patient.targetDevices;
+        _.forEach(sensors, function(sensor){
+            patient["sensors"].push({"name": sensor,  "data": deviceManager.getPatientSensorLatestEvent(sensor, patient.userid)});
+        })
+    });
+    return utils.format(patients);
+}
+
+if(isPatient) {
+    var profile = JSON.parse(JSON.stringify(request.user));
+    
+    //Get Latest data for each patient
+    profile["sensors"] = [];
+    var sensors = request.user.targetDevices;
+    _.forEach(sensors, function(sensor){
+        profile["sensors"].push({"name": sensor,  "data": deviceManager.getPatientSensorLatestEvent(sensor, profile.userid)});
+    })
+    return utils.format([profile]);
+}
+
+
+
+

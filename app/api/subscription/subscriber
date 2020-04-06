@@ -1,0 +1,20 @@
+var log = require("log"); 
+log.setLevel("info");
+
+var devices = require("device");
+var utils = require("app/entities/utils");
+
+var _ = require("modules/underscore/underscore.js")._;
+
+var ingestor = require("app/entities/ingestDevicesEvents");
+
+
+var body = request.body ? request.body : ((request.rawBody) ? request.rawBody : request.parameters);
+var data = typeof(body) == "string" ? JSON.parse(body) : body;
+
+
+return ingestor.ingestEvents(data.events, data.patientId, true);
+
+
+
+

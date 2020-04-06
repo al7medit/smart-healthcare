@@ -1,0 +1,22 @@
+var responseObj = [];
+
+var pullDataParams = {};
+
+var pullDataQueue = {
+    "apsdb.scriptName":"tidepool/pullData",
+    "params": JSON.stringify(pullDataParams),
+};
+
+
+var dataQueue = apsdb.callApi("QueueScript", pullDataQueue, null);
+
+if (dataQueue.status == "failure") {
+    var errorMsg = "[pullData] An error occurred while queueing job [" + JSON.stringify(dataQueue) + "]";
+    responseObj.push({"pullDataDetailsJobError": errorMsg });
+} else {
+
+    responseObj.push({"status":"success", "result": dataQueue});
+}
+
+return responseObj;
+

@@ -1,0 +1,43 @@
+var expiry = 60;
+
+
+var dmpDeviceBroker = "myDmpBroker";
+
+var defaultApp = "healthCare";
+
+var businessRuleScript = "app/entities/rules/decisionTable";
+
+var healthcareGroup = ["group:clinic"];
+var patientGroup = ["group:patient"];
+
+var availableDeviceTypes =  {
+    "cbg": require("app/config/Dexcom/config"),
+    "smbg": require("app/config/Omnipod/config")
+}
+
+var email = {
+    "TO": "",
+    "FROM": "Scriptr: Connected Device App",
+    "BODY": ""
+}
+
+var templates = {
+  mail: {
+      HIGH_CBG: {
+        subject: 'Patient <%= patient_name %> : High CBG!',
+        body: 'Device with id <%= id %> for <%= patient_name %> recorded a high <%= type %> value of <%= cbg %> <%= units %>.'
+      },
+      LOW_CBG: {
+         subject: 'Patient <%= patient_name %> : Low CBG!',
+        body: 'Device with id <%= id %> for <%= patient_name %> recorded a low <%= type %> value of <%= cbg %> <%= units %>.'
+      },
+       HIGH_SMBG: {
+        subject: 'Patient <%= patient_name %> : High SMBG!',
+        body: 'Device with id <%= id %> for <%= patient_name %> recorded a high <%= type %> value of <%= smbg %> <%= units %>.'
+      },
+      LOW_SMBGG: {
+        subject: 'Patient <%= patient_name %> : Low SMBG!',
+        body: 'Device with id <%= id %> for <%= patient_name %> recorded a low <%= type %> value of <%= smbg %> <%= units %>.'
+      }
+  }
+}

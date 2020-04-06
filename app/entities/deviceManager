@@ -1,0 +1,190 @@
+var document = require("document");
+var device = require("device");
+var user = require("user");
+var utils = require("app/entities/utils");
+
+var _= require("modules/underscore/underscore.js")._;
+
+var log = require("log");
+log.setLevel("INFO");
+
+var event_prefix = "device_event_";
+var type = "hardware";
+
+function getPatientAlerts(patientId, pageNumber ) {
+  var key = event_prefix;
+   
+  var maxAllowedResultsPerPage = 50;
+  var params = {
+    "query" : "key like \""+key+"_%\" and patientid = \"" + patientId + "\" and event_type in [\"alert\"]",
+    "fields": "*",
+    "count": true,
+    "sort": "time<date:DESC>",
+    "resultsPerPage": maxAllowedResultsPerPage //Maximum allowed number of results [50]
+  }
+  
+  if(pageNumber){
+        params["pageNumber"] = pageNumber;
+  }
+    
+    var result = document.query(params);
+
+    var result = document.query(params);
+    if(result.metadata.status == "success" && result.result.documents.length > 0) {
+        return result.result;
+    } else {
+        return null;
+    }
+}
+
+function buildDeviceEventDocument(entry, data) {
+    _.extendOwn(entry, data);
+    delete entry.auth_token;
+    delete entry.versionNumber;
+    delete entry.latest;
+    delete entry.creator;
+
+    entry["event_type"] = ["event"];
+    entry["key"] = event_prefix + entry.id + "_" + new Date().getTime();
+ 	entry["meta.types"] = {
+        "cbg": "numeric",
+        "smbg": "numeric",
+        "time": "date"
+   	}
+    return entry;
+}
+
+function saveDeviceEvent(entry) {
+   log.info("[app/entities/devicemanager] saving device event."+JSON.stringify(entry))
+    log.info("[app/entities/devicemanager] saving device event."+JSON.stringify(document.save(entry)))
+  // return ;
+}
+
+
+function buildDeviceDefinitionDocument(entry) {
+    entry["id"] = entry.id;
+    entry["password"] = utils.generate();
+    entry["type"] = type;
+    return entry;
+}
+
+function saveDeviceDefinition(entry) {
+   return device.save(entry);
+}
+
+function getDeviceDefinition(id) {
+    var params = {
+       "query" : "id =\""+ id +"\"",
+       "fields": "country, source, patientid"
+   }
+   var result = device.query(params);
+   if(result.metadata.status == "success") {
+        return result.result.devices[0];
+   } else {
+        return null;
+   }
+}
+
+
+function getAllDevicesDefinition() {
+
+   var params = {
+       "query" : "type =\""+ type +"\"",
+       "fields": "*"
+   }
+   
+   var result = device.query(params);
+   if(result.metadata.status == "success" && result.result.devices.length > 0) {
+        return result.result.devices;
+   } else {
+        return null;
+   }
+}
+
+
+function getAllPatients(healthCare) {
+     var params = {
+       "query" : "healthcare_professional =\""+ healthCare +"\"",
+       "fields": "*"
+   }
+   
+   var result = user.query(params);
+   if(result.metadata.status == "success" && result.result.users.length > 0) {
+        return result.result.users;
+   } else {
+        return null;
+   }
+}
+
+function getPatientSensorLatestEvent(sensor, patientId) {
+   var key = event_prefix;
+  
+   var params = {
+       "query" : "key like \""+key+"_%\" and sensor = \""+ sensor + "\" and patientid = \"" + patientId + "\"",
+       "fields": "*",
+       "sort": "time<date:DESC>",
+       "resultsPerPage": 1
+   }
+  log.info(JSON.stringify(params))
+   var result = document.query(params);
+    log.info(JSON.stringify(result))
+   if(result.metadata.status == "success" && result.result.documents.length > 0) {
+        return result.result.documents[0];
+   } else {
+        return null;
+   }
+}
+
+
+function getPatientSensorHistoricalEntries(sensor, patientId) {
+   var key = event_prefix;
+   
+  var maxAllowedResultsPerPage = 50;
+  var params = {
+    "query" : "key like \""+key+"_%\" and sensor = \""+ sensor + "\" and patientid = \"" + patientId + "\"",
+    "fields": "*",
+    "count": true,
+    "sort": "time<date:DESC>",
+    "resultsPerPage": maxAllowedResultsPerPage //Maximum allowed number of results [50]
+  }
+  var recordCount = 100;
+  var pageCounter = 1;
+  var continueLoop = true;
+
+  var documents = [];
+
+  while(continueLoop){
+      params["pageNumber"] = pageCounter;
+      
+      if(recordCount && recordCount < maxAllowedResultsPerPage){
+      	params["resultsPerPage"] = recordCount;
+      } 
+
+      if(recordCount && documents.length >= recordCount) {
+          continueLoop = false;
+          continue;
+      }
+
+      if(documents.length < recordCount && recordCount < documents.length + params["resultsPerPage"]) {
+          params["resultsPerPage"] = recordCount - documents.length;
+      }
+       
+      var result = document.query(params);
+      log.info("[app/entities/deviceManager] result\n"+JSON.stringify(result));
+
+      if(result.metadata.status == "success") {
+          if(result.result && result.result.documents && result.result.documents.length == 0) {
+              continueLoop = false;
+              continue;
+          }
+          pageCounter++;
+          documents = _.union(documents, result.result.documents);
+
+      } else {
+          continueLoop = false;
+          continue;
+      }
+  }
+
+    return documents;
+}

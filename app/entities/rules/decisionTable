@@ -1,0 +1,63 @@
+//Get payload parameters
+var pl = null;
+var requestBody = request.body;
+if (!requestBody) {
+	pl = request.parameters.payload;
+	pl = JSON.parse(pl);
+} else {
+	pl = requestBody.payload;
+}
+
+//START TABLE DECISION CODE
+function execute(pl) {
+
+var decision = [];
+
+//PRESCRIPT START
+
+//PRESCRIPT END
+
+//RULES EVALUATION START
+if(typeof pl != "object") {
+  return[];
+} else { 
+	  if((pl != null && pl["cbg"] != undefined && pl["cbg"] >5) && isAny("smbg")){
+       decision.push({ "sendEmail": "HIGH_CBG","isAlert": "true" });
+	} 
+	 else if(isAny("cbg") && (pl != null && pl["smbg"] != undefined && pl["smbg"] >7.5)){
+       decision.push({ "sendEmail": "HIGH_SMBG","isAlert": "true" });
+	} 
+	 else if((pl != null && pl["cbg"] != undefined && pl["cbg"] <7) && isAny("smbg")){
+       decision.push({ "sendEmail": "LOW_CBG","isAlert": "true" });
+	} 
+	 else if(isAny("cbg") && (pl != null && pl["smbg"] != undefined && pl["smbg"] <7.5)){
+       decision.push({ "sendEmail": "LOW_SMBG","isAlert": "true" });
+	} 
+}
+//RULES EVALUATION END
+
+//POSTSCRIPT START
+//Variable "decision" is the object returned by the decision table execution.
+//Variable "decision" format is [{"action1": "value1", "action2":  "value2"}].
+return decision;
+//POSTSCRIPT END
+
+}
+//Check if value is "in" or is "not in" array
+//return true or false
+function evalArrayOperation(value, operator,  array) {
+	if(operator == "in") {
+		return (array.indexOf(value)>-1);
+	} else {
+		return (array.indexOf(value) == -1) ;
+	} 
+}
+
+//isAny function, when condition expression is not important
+function isAny(param) {
+	return true;
+}
+
+//START_REST_CALL 
+return execute(pl);
+//END_REST_CALL
