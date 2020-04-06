@@ -53,8 +53,4 @@ var topic = pubsub.getInstance("deviceDigest");
 var response = topic.subscribe("app/api/subscription/subscriber", "script");
 responseObject["subscribeScriptToChannel"] = JSON.stringify(response);
 
-//Set a scheduler to cleanup events
-var scheduleCleanup = schedule("app/cleanup/devicesEvents", "5 * * * ?");
-responseObject["scheduleCleanup"] = JSON.stringify(scheduleCleanup);
-
 return responseObject;
