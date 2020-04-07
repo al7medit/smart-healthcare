@@ -9,6 +9,7 @@ var businessRuleScript = "app/entities/rules/decisionTable";
 
 var healthcareGroup = ["group:clinic"];
 var patientGroup = ["group:patient"];
+var editorGroup= ["group:editor"];
 
 var availableDeviceTypes =  {
     "cbg": require("app/config/Dexcom/config"),

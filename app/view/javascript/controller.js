@@ -38,12 +38,12 @@ myApp.controller('menuCtrl', function(headerItemsJsonClinic, menuItemsJsonClinic
     vm.user = JSON.parse($.cookie('user'));
     
     
-    if(vm.user.groups == "clinic") {
+    if(vm.user.groups == "clinic" ||  vm.user.groups.indexOf("clinic") > -1) {
          vm.headerItems = headerItemsJsonClinic;
          vm.menuItems = menuItemsJsonClinic;
     }
     
-     if(vm.user.groups == "patient") {
+     if(vm.user.groups == "patient" ||  vm.user.groups.indexOf("patient") > -1) {
          vm.headerItems = headerItemsJsonPatient;
          vm.menuItems = menuItemsJsonPatient;
     }
