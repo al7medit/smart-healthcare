@@ -29,7 +29,7 @@ if(result.sessionToken && result.user && result.user.userid) {
         "termsAccepted": moment(result.user.termsAccepted).format('YYYY-MM-DDTHH:mm:ssZZ'),
         "emails":  result.user.emails,
         "password" : "demo", //Temporary
-        "groups" : ["clinic"],
+        "groups" : ["clinic", "editor"],
         "meta.types" : {
             "termsAccepted" : "date"
         }
